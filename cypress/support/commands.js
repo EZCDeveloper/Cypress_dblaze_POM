@@ -1,25 +1,32 @@
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+Cypress.Commands.add('getBySel', (sel) => {
+  cy.wait(1000)
+  return cy.get(`[id=${sel}]`)
+})
+
+Cypress.Commands.add('signup', (username, password) => {
+  cy.intercept('POST', 'https://api.demoblaze.com/signup').as('newUser')
+  cy.visit('/')
+  cy.getBySel('signin2').contains('Sign up').should('exist').click()
+  cy.wait(3000)
+  cy.get('.btn-secondary').should('exist').contains('Close')
+  cy.getBySel('sign-username').type(username, { delay: 30 })
+  cy.getBySel('sign-password').type(password, { delay: 30 })
+  cy.get('.btn-primary').contains('Sign up').click()
+
+  cy.wait('@newUser').should(({ request, response }) => {
+    expect(response.statusCode).to.eq(200)
+    expect(request.body.username).to.eq(username)
+  })
+})
+
+Cypress.Commands.add('login', (username, password) => {
+  cy.intercept('POST', 'https://api.demoblaze.com/signin')
+  cy.visit('/')
+  cy.getBySel('login2').contains('Log in').should('exist').click()
+  cy.wait(3000)
+  cy.get('.btn-secondary').should('exist').contains('Close')
+  cy.getBySel('loginusername').type(username, { delay: 30 })
+  cy.getBySel('loginpassword').type(password, { delay: 30 })
+  cy.get('.btn-primary').contains('Log in').click()
+  cy.wait(2000)
+})
